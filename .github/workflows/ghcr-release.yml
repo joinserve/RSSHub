@@ -49,6 +49,7 @@ jobs:
                   echo "${GITHUB_PACKAGE_TOKEN}" | docker login ghcr.io -u "${USERNAME}" --password-stdin
                   docker buildx build --push \
                       --platform linux/amd64 \
+                      --build-arg PUPPETEER_SKIP_DOWNLOAD=0 \
                       --cache-from "type=gha" \
                       --cache-to "type=gha,mode=max" \
                       -t "ghcr.io/${REPO_OWNER}/rsshub:${GITHUB_REF_NAME}" \
