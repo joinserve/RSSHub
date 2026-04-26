@@ -1,0 +1,57 @@
+name: GHCR Release
+
+on:
+    push:
+        branches:
+            - master
+        paths:
+            - '.github/workflows/ghcr-release.yml'
+            - 'lib/**'
+            - '!lib/**/*.test.ts'
+            - 'Dockerfile'
+            - 'package.json'
+            - 'pnpm-lock.yaml'
+    workflow_dispatch: {}
+
+permissions:
+    contents: read
+    packages: write
+
+concurrency:
+    group: ghcr-release-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: checkout
+              uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+
+            - name: set up Docker Buildx
+              id: buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: lowercase repo owner
+              id: owner
+              run: echo "value=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+            - name: build and push to ghcr.io
+              env:
+                  GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  USERNAME: ${{ github.actor }}
+                  GITHUB_SHA: ${{ github.sha }}
+                  GITHUB_REF_NAME: ${{ github.ref_name }}
+                  REPO_OWNER: ${{ steps.owner.outputs.value }}
+              run: |
+                  echo "${GITHUB_PACKAGE_TOKEN}" | docker login ghcr.io -u "${USERNAME}" --password-stdin
+                  docker buildx build --push \
+                      --platform linux/amd64 \
+                      --cache-from "type=gha" \
+                      --cache-to "type=gha,mode=max" \
+                      -t "ghcr.io/${REPO_OWNER}/rsshub:${GITHUB_REF_NAME}" \
+                      -t "ghcr.io/${REPO_OWNER}/rsshub:latest" \
+                      -t "ghcr.io/${REPO_OWNER}/rsshub:sha-${GITHUB_SHA::7}" \
+                      .
