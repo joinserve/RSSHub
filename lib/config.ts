@@ -203,6 +203,7 @@ type ConfigEnvKeys =
     | 'TELEGRAM_PROXY_HOST'
     | 'TELEGRAM_PROXY_PORT'
     | 'TELEGRAM_PROXY_SECRET'
+    | 'THREADS_COOKIE'
     | 'TOPHUB_COOKIE'
     | 'TSDM39_COOKIES'
     | 'TUMBLR_CLIENT_ID'
@@ -624,6 +625,9 @@ export type Config = {
             port?: number;
             secret?: string;
         };
+    };
+    threads: {
+        cookie?: string;
     };
     tophub: {
         cookie?: string;
@@ -1127,6 +1131,9 @@ const calculateValue = () => {
                 port: envs.TELEGRAM_PROXY_PORT,
                 secret: envs.TELEGRAM_PROXY_SECRET,
             },
+        },
+        threads: {
+            cookie: envs.THREADS_COOKIE,
         },
         tophub: {
             cookie: envs.TOPHUB_COOKIE,

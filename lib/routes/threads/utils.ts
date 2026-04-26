@@ -3,30 +3,49 @@ import dayjs from 'dayjs';
 import { JSDOM } from 'jsdom';
 import { JSONPath } from 'jsonpath-plus';
 
+import { config } from '@/config';
 import NotFoundError from '@/errors/types/not-found';
 import cache from '@/utils/cache';
 import ofetch from '@/utils/ofetch';
 
 const profileUrl = (user: string) => `https://www.threads.com/@${user}`;
 const threadUrl = (code: string) => `https://www.threads.com/t/${code}`;
+const searchUrl = (query: string, serpType: string, opts: { filter?: string; afterDate?: string } = {}) => {
+    const params = new URLSearchParams({ q: query, serp_type: serpType });
+    if (opts.filter) {
+        params.set('filter', opts.filter);
+    }
+    if (opts.afterDate) {
+        params.set('after_date', opts.afterDate);
+    }
+    return `https://www.threads.com/search?${params.toString()}`;
+};
 
 const USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
 
+const buildHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {
+        'User-Agent': USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Encoding': 'gzip, br',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+    };
+    if (config.threads.cookie) {
+        headers.Cookie = config.threads.cookie;
+    }
+    return headers;
+};
+
 const extractTokens = async (user): Promise<{ lsd: string }> => {
     const response = await ofetch(profileUrl(user), {
-        headers: {
-            'User-Agent': USER_AGENT,
-            Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Encoding': 'gzip, br',
-            'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Upgrade-Insecure-Requests': '1',
-        },
+        headers: buildHeaders(),
     });
 
     const $ = load(response);
@@ -44,19 +63,7 @@ const getUserId = (user: string): Promise<string> =>
     cache
         .tryGet(`threads:userId:${user}`, async () => {
             const response = await ofetch(profileUrl(user), {
-                headers: {
-                    'User-Agent': USER_AGENT,
-                    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                    'Accept-Encoding': 'gzip, br',
-                    'Accept-Language': 'zh-CN,zh;q=0.9',
-                    'Cache-Control': 'no-cache',
-                    Pragma: 'no-cache',
-                    'Sec-Fetch-Dest': 'document',
-                    'Sec-Fetch-Mode': 'navigate',
-                    'Sec-Fetch-Site': 'none',
-                    'Sec-Fetch-User': '?1',
-                    'Upgrade-Insecure-Requests': '1',
-                },
+                headers: buildHeaders(),
             });
 
             const dom = new JSDOM(response);
@@ -168,4 +175,4 @@ const buildContent = (item, options) => {
     return { title, description };
 };
 
-export { buildContent, extractTokens, getUserId, profileUrl, threadUrl };
+export { buildContent, buildHeaders, extractTokens, getUserId, profileUrl, searchUrl, threadUrl };
