@@ -9,22 +9,27 @@ import { parseDate } from '@/utils/parse-date';
 import { buildContent, buildHeaders, searchUrl, threadUrl } from './utils';
 
 export const route: Route = {
-    path: '/search/:query/:serpType?/:minLikes?',
+    path: '/search/:query/:serpType?/:routeParams?',
     categories: ['social-media'],
     view: ViewType.SocialMedia,
-    example: '/threads/search/Gemini/tags/100',
+    example: '/threads/search/Gemini/tags/filter=recent&minLikes=10',
     parameters: {
         query: 'Search keyword (or hashtag without `#` when `serpType` is `tags`)',
         serpType: {
-            description: 'Search results page type. Defaults to `default`.',
+            description: 'The `serp_type` query Threads expects. `default` and `tags` produce near-identical result sets; `tags` matches the URL Threads emits when a topic chip is clicked.',
             default: 'default',
             options: [
-                { value: 'default', label: 'Top (mixed)' },
-                { value: 'tags', label: 'Hashtag / topic' },
-                { value: 'recent', label: 'Recent' },
+                { value: 'default', label: 'Default' },
+                { value: 'tags', label: 'Tags / topic' },
             ],
         },
-        minLikes: 'Minimum like count required for an item to be included. Defaults to `0` (no filter).',
+        routeParams: `Extra filters as a query-string. Supported keys:
+
+| Key         | Description                                                | Accepts            | Default |
+| ----------- | ---------------------------------------------------------- | ------------------ | ------- |
+| \`filter\`    | Sort mode passed through to Threads                        | \`recent\`           | unset   |
+| \`afterDate\` | Earliest post date (sent as Threads' \`after_date\`)         | \`YYYY-MM-DD\`       | unset   |
+| \`minLikes\`  | Minimum \`like_count\` required for an item to be included | non-negative integer | \`0\`     |`,
     },
     features: {
         requireConfig: [
@@ -43,9 +48,12 @@ export const route: Route = {
 async function handler(ctx) {
     const { query } = ctx.req.param();
     const serpType = ctx.req.param('serpType') || 'default';
-    const minLikes = Number.parseInt(ctx.req.param('minLikes') || '0', 10) || 0;
+    const params = new URLSearchParams(ctx.req.param('routeParams') || '');
+    const filter = params.get('filter') || undefined;
+    const afterDate = params.get('afterDate') || undefined;
+    const minLikes = Number.parseInt(params.get('minLikes') || '0', 10) || 0;
 
-    const url = searchUrl(query, serpType);
+    const url = searchUrl(query, serpType, { filter, afterDate });
     const response = await ofetch(url, { headers: buildHeaders() });
 
     const dom = new JSDOM(response);

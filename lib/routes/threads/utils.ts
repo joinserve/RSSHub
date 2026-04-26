@@ -10,7 +10,16 @@ import ofetch from '@/utils/ofetch';
 
 const profileUrl = (user: string) => `https://www.threads.com/@${user}`;
 const threadUrl = (code: string) => `https://www.threads.com/t/${code}`;
-const searchUrl = (query: string, serpType: string) => `https://www.threads.com/search?q=${encodeURIComponent(query)}&serp_type=${encodeURIComponent(serpType)}`;
+const searchUrl = (query: string, serpType: string, opts: { filter?: string; afterDate?: string } = {}) => {
+    const params = new URLSearchParams({ q: query, serp_type: serpType });
+    if (opts.filter) {
+        params.set('filter', opts.filter);
+    }
+    if (opts.afterDate) {
+        params.set('after_date', opts.afterDate);
+    }
+    return `https://www.threads.com/search?${params.toString()}`;
+};
 
 const USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
 
