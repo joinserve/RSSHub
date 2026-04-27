@@ -8594,6 +8594,10 @@
     "ninboy",
     "pseudoyu"
   ],
+  "/threads/search/:query/:serpType?/:routeParams?": [
+    "ninboy",
+    "pseudoyu"
+  ],
   "/thwiki/calendar/:before?/:after?": [
     "aether17"
   ],

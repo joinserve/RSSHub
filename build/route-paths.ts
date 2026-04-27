@@ -2789,6 +2789,7 @@ export type RoutePath =
   | `/thoughtco/:category?`
   | `/thoughtworks/blog`
   | `/threads/:user/:routeParams?`
+  | `/threads/search/:query/:serpType?/:routeParams?`
   | `/thwiki/calendar/:before?/:after?`
   | `/thzt/blog`
   | `/tidb/blog/c/:category?`
