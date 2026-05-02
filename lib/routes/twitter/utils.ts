@@ -393,13 +393,14 @@ const ProcessFeed = (ctx, { data = [] }, params = {}) => {
             originalItem.user?.screen_name && (originalItem.id_str || originalItem.conversation_id_str)
                 ? `https://x.com/${originalItem.user?.screen_name}/status/${originalItem.id_str || originalItem.conversation_id_str}`
                 : `https://x.com/${item.user?.screen_name}/status/${item.id_str || item.conversation_id_str}`;
+        const authorAvatar = originalItem.user?.profile_image_url_https;
         return {
             title,
             author: [
                 {
                     name: originalItem.user?.name,
                     url: `https://x.com/${originalItem.user?.screen_name}`,
-                    avatar: originalItem.user?.profile_image_url_https,
+                    avatar: authorAvatar,
                 },
             ],
             description,
@@ -407,6 +408,7 @@ const ProcessFeed = (ctx, { data = [] }, params = {}) => {
             link,
             guid: link.replace('x.com', 'twitter.com'),
             category,
+            media: authorAvatar ? { thumbnail: { url: authorAvatar } } : undefined,
             _extra:
                 (isRetweet && {
                     links: [
