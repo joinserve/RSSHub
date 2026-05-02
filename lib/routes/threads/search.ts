@@ -93,12 +93,14 @@ async function handler(ctx) {
         .filter((item) => (item.post.like_count ?? 0) >= minLikes)
         .map((item) => {
             const { title, description } = buildContent(item, options);
+            const avatar = item.post.user!.profile_pic_url;
             return {
                 title,
                 description,
                 author: item.post.user!.username,
                 pubDate: parseDate(item.post.taken_at, 'X'),
                 link: threadUrl(item.post.code),
+                media: avatar ? { thumbnail: { url: avatar } } : undefined,
             };
         });
 
